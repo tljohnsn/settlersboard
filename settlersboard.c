@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <dirent.h>
+#include <time.h>
 
 // gcc -o sbc settlersboard.c `pkg-config --libs --cflags gtk+-2.0` -O3 -ffast-math
  
@@ -508,7 +509,9 @@ void add_theme_dirs(GtkWidget* comboBox)
 
 int main(int argc, char** argv) {
 
-  srand(time(NULL));
+  time_t t;
+
+  srand((unsigned) time(&t));
 
   GtkWidget *three_player_button, *four_player_button,
   *five_player_button, *six_player_button, *quit_button,
