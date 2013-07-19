@@ -1,0 +1,4 @@
+settlersboard
+=============
+
+Settlers Board Generator
