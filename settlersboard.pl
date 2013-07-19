@@ -8,6 +8,7 @@ use MIME::Base64 qw[ encode_base64 ];
 
 my $theme = "trent";
 
+# New method so we don't have to keep using  srcY, destW, destH, srcW, srcH
 sub GD::Image::copyHex {
     my ($self) = shift;
     my $source = shift;
@@ -29,15 +30,13 @@ sub fisher_yates_shuffle {
 }
 
 GD::Image->trueColor(1);
+# Load a 1920 x 1080 background/water image
 my $bg = GD::Image->newFromPng("themes/$theme/bg.png");
 $bg->alphaBlending(0); $bg->saveAlpha(1);
 
 my ($bgW, $bgH) = $bg->getBounds();
 
-my $outImage = new GD::Image($bgW, $bgH);
-$outImage->alphaBlending(1);
-$outImage->saveAlpha(1);
-
+# Load images of all the tiles
 my $hexgrid = GD::Image->newFromPng("themes/$theme/hexgrid.png");
 $hexgrid->alphaBlending(0); $hexgrid->saveAlpha(1);
 my $wheat = GD::Image->newFromPng("themes/$theme/wheat.png");
@@ -53,26 +52,6 @@ $tree->alphaBlending(0); $tree->saveAlpha(1);
 my $desert = GD::Image->newFromPng("themes/$theme/desert.png");
 $desert->alphaBlending(0); $desert->saveAlpha(1);
 
-my ($hexwidth,$hexheight) = $brick->getBounds();
-my $hexside = ($hexheight / 2) + 11;
-my $offset = int(sqrt(3)* $hexside / 4) + 8;
-#print "$hexwidth,$hexheight,$hexside,$offset";
-
-$outImage->copyResampled($bg, 0, 0, 0 ,0, $bgW, $bgH, $bgW, $bgH);
-my @deck4 = ($tree, $tree, $tree, $tree, 
-	     $wheat, $wheat, $wheat, $wheat, 
-	     $sheep, $sheep, $sheep, $sheep,
-	     $ore, $ore, $ore,
-	     $brick, $brick, $brick );
-my @deck6 = ($tree, $tree, $tree, $tree, $tree, $tree, 
-	    $wheat, $wheat, $wheat, $wheat, $wheat, $wheat, 
-	    $sheep, $sheep, $sheep, $sheep,$sheep, $sheep,
-	    $ore, $ore, $ore, $ore, $ore,
-	    $brick, $brick, $brick, $brick, $brick
-    ),
-my @numbersDeck4 = (2, 3, 3, 4, 4, 5, 5, 6, 6, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 7);
-my @numbersDeck6 = (2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 8, 8, 8, 9, 9, 9, 10, 10, 10, 11, 11, 11, 12, 12, 7, 7);
-
 my @numbersImage = ();
 for (my $i = 2; $i<= 12; $i++ ){
     if ($i !=7 ) {
@@ -84,16 +63,44 @@ for (my $i = 2; $i<= 12; $i++ ){
 $numbersImage[1]= GD::Image->newFromPng("themes/$theme/circle.png");
 $numbersImage[7]= GD::Image->newFromPng("themes/$theme/circle.png");
 
+# Calculate the display ofsets of the hexes loaded above
+my ($hexwidth,$hexheight) = $brick->getBounds();
+my $hexside = ($hexheight / 2) + 11;
+my $offset = int(sqrt(3)* $hexside / 4) + 8;
+#print "$hexwidth,$hexheight,$hexside,$offset";
+
+# Tile and numbersets are constant
+my @deck4 = ($tree, $tree, $tree, $tree, 
+	     $wheat, $wheat, $wheat, $wheat, 
+	     $sheep, $sheep, $sheep, $sheep,
+	     $ore, $ore, $ore,
+	     $brick, $brick, $brick );
+my @deck6 = ($tree, $tree, $tree, $tree, $tree, $tree, 
+	    $wheat, $wheat, $wheat, $wheat, $wheat, $wheat, 
+	    $sheep, $sheep, $sheep, $sheep,$sheep, $sheep,
+	    $ore, $ore, $ore, $ore, $ore,
+	    $brick, $brick, $brick, $brick, $brick),
+my @numbersDeck4 = (2, 3, 3, 4, 4, 5, 5, 6, 6, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 7);
+my @numbersDeck6 = (2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 8, 8, 8, 9, 9, 9, 10, 10, 10, 11, 11, 11, 12, 12, 7, 7);
+
+#Start building the board image
+my $outImage = new GD::Image($bgW, $bgH);
+$outImage->alphaBlending(1);
+$outImage->saveAlpha(1);
+$outImage->copyResampled($bg, 0, 0, 0 ,0, $bgW, $bgH, $bgW, $bgH);
+
 sub generate_board {
     my $numplayers = shift;
     my @deck = ();
     my @numbersDeck = ();
     my @board=();
+    # Initialize Board array
     for (my $col=0; $col<=8; $col++) {
 	for (my $row=0; $row<=8; $row++) {
 	    $board[$col][$row] = 0;
 	}
     }
+    # Distribute numbers first until we find a valid config
     my $validboard = 0;
     while ($validboard == 0) {
 #	print("Reset\n");
@@ -107,6 +114,7 @@ sub generate_board {
     fisher_yates_shuffle(\@deck);
     fisher_yates_shuffle(\@numbersDeck);
     $validboard = 1;
+    # Only fill the proper spaces in the hex grid with numbers
     for (my $col=1; $col<=7; $col++) {
 	for (my $row=1; $row<=6; $row++) {
 	    if ($numplayers == 6 ) {
@@ -133,6 +141,7 @@ sub generate_board {
 		$board[$col][$row] = pop(@numbersDeck);
 	    }
 	    }
+	    # Check adjacency on 6's and 8's
 	    my $currentnum = $board[$col][$row];
 	    if ($currentnum == 6 || $currentnum == 8 ) {
 		#print "number $col,$row  $board[$col][$row] ";
@@ -159,7 +168,9 @@ sub generate_board {
     }
 }
 
-print "Generate board image\n";
+#Numbers are now arranged in $board, generate an image and distribute tiles
+#print "Generate board image\n";
+    # Center the board withing the bg image
     my $xoff = 0;
     my $yoff = 0;
     if ($numplayers == 6) {
@@ -170,6 +181,7 @@ print "Generate board image\n";
 	$xoff = int(($bgW - $hexwidth * 7) / 2) ;
 	$outImage->copyResampled($bg, 0, 0, 0 ,0, $bgW, $bgH, $bgW, $bgH);
     }
+
 for (my $col=1; $col<=7; $col++) {
     for (my $row=1; $row<=6; $row++) {
 	my $dstX = 0; my $dstY = 0;
@@ -202,7 +214,7 @@ for (my $col=1; $col<=7; $col++) {
 #close OUTIMAGE;
 }
 
-
+# Setup the gui
 my $mw=tkinit;
 my $canvas = $mw->Scrolled('Canvas', -width => 1600, -height => 1000)->pack(-expand=>1, -fill=>'both');
 my $img = $mw->Photo( -data=>encode_base64($outImage->png), -format=>'png');
