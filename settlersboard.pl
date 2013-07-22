@@ -5,7 +5,8 @@ use GD;
 use Tk;
 use Tk::PNG;
 use MIME::Base64 qw[ encode_base64 ];
-
+# sudo yum -y install perl-Tk perl-GD 
+# Grid generator: http://axiscity.hexamon.net/users/isomage/misc/svg-hex.cgi
 my $theme = "trent";
 
 # New method so we don't have to keep using  srcY, destW, destH, srcW, srcH
@@ -63,9 +64,12 @@ for (my $i = 2; $i<= 12; $i++ ){
 $numbersImage[1]= GD::Image->newFromPng("themes/$theme/circle.png");
 $numbersImage[7]= GD::Image->newFromPng("themes/$theme/circle.png");
 
+my $ports4 = GD::Image->newFromPng("themes/$theme/ports4.png");
+my $ports6 = GD::Image->newFromPng("themes/$theme/ports6.png");
+
 # Calculate the display ofsets of the hexes loaded above
 my ($hexwidth,$hexheight) = $brick->getBounds();
-my $hexside = ($hexheight / 2) + 11;
+my $hexside = int($hexheight/sqrt(3));
 my $offset = int(sqrt(3)* $hexside / 4) + 8;
 #print "$hexwidth,$hexheight,$hexside,$offset";
 
@@ -173,13 +177,20 @@ sub generate_board {
     # Center the board withing the bg image
     my $xoff = 0;
     my $yoff = 0;
+    my $portH = 0;
+    my $portW = 0;
+
     if ($numplayers == 6) {
 	$xoff = int(($bgW - $hexwidth * 8) / 2) ;
 	$outImage->copyResampled($bg, 0, 0, 0 ,0, $bgW, $bgH, $bgW, $bgH);
-	$yoff = -1 * int($hexheight/2);
+#	$yoff = -1 * int($hexheight/2);
+	$yoff =  int(($bgH - $hexheight * 8.5)/2);
     } else {
 	$xoff = int(($bgW - $hexwidth * 7) / 2) ;
+	$yoff =  int(($bgH - $hexheight * 7.5)/2) - 50;
 	$outImage->copyResampled($bg, 0, 0, 0 ,0, $bgW, $bgH, $bgW, $bgH);
+	($portW, $portH) = $ports4->getBounds();
+	$outImage->copyResampled($ports4, ($bgW - $portW) /2, ($bgH - $portH) /2 - 50, 0, 0, $portW, $portH, $portW, $portH);
     }
 
 for (my $col=1; $col<=7; $col++) {
