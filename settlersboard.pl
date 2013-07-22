@@ -7,7 +7,7 @@ use Tk::PNG;
 use MIME::Base64 qw[ encode_base64 ];
 # sudo yum -y install perl-Tk perl-GD 
 # Grid generator: http://axiscity.hexamon.net/users/isomage/misc/svg-hex.cgi
-my $theme = "trent";
+my $theme = "trent3";
 
 # New method so we don't have to keep using  srcY, destW, destH, srcW, srcH
 sub GD::Image::copyHex {
@@ -17,7 +17,10 @@ sub GD::Image::copyHex {
     my $dstY = shift;
     my ($hexwidth,$hexheight) = $source->getBounds();
     #copyResampled(destination, source, dstX, dstY, srcX, srcY, destW, destH, srcW, srcH)
-    $self->copyResampled($source, $dstX, $dstY, 0, 0, $hexwidth, $hexheight, $hexwidth, $hexheight);
+    # $self->copyResampled($source, $dstX, $dstY, 0, 0, $hexwidth, $hexheight, $hexwidth, $hexheight);
+    my $angle = (int rand(6)) * 60;
+    print "$angle ";
+    $self->copyRotated($source, $dstX + $hexwidth / 2, $dstY + $hexheight/2, 0, 0, $hexwidth, $hexheight, $angle);
 }
 
 sub fisher_yates_shuffle {
