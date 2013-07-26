@@ -7,7 +7,7 @@ use Tk::PNG;
 use MIME::Base64 qw[ encode_base64 ];
 # sudo yum -y install perl-Tk perl-GD 
 # Grid generator: http://axiscity.hexamon.net/users/isomage/misc/svg-hex.cgi
-my $theme = "trent";
+my $theme = "wide";
 
 # New method so we don't have to keep using  srcY, destW, destH, srcW, srcH
 sub GD::Image::copyHex {
@@ -19,8 +19,7 @@ sub GD::Image::copyHex {
     #copyResampled(destination, source, dstX, dstY, srcX, srcY, destW, destH, srcW, srcH)
     # $self->copyResampled($source, $dstX, $dstY, 0, 0, $hexwidth, $hexheight, $hexwidth, $hexheight);
     my $angle = (int rand(6)) * 60;
-    print "$angle ";
-    $self->copyRotated($source, $dstX + $hexwidth / 2, $dstY + $hexheight/2, 0, 0, $hexwidth, $hexheight, $angle);
+   $self->copyRotated($source, $dstX + $hexwidth / 2, $dstY + $hexheight/2, 0, 0, $hexwidth, $hexheight, $angle);
 }
 
 sub fisher_yates_shuffle {
@@ -72,9 +71,9 @@ my $ports6 = GD::Image->newFromPng("themes/$theme/ports6.png");
 
 # Calculate the display ofsets of the hexes loaded above
 my ($hexwidth,$hexheight) = $brick->getBounds();
-my $hexside = int($hexheight/sqrt(3));
+my $hexside = $hexheight  / 2;
 my $offset = int(sqrt(3)* $hexside / 4) + 8;
-#print "$hexwidth,$hexheight,$hexside,$offset";
+print "$hexwidth,$hexheight,$hexside,$offset";
 
 # Tile and numbersets are constant
 my @deck4 = ($tree, $tree, $tree, $tree, 
@@ -87,15 +86,18 @@ my @deck6 = ($tree, $tree, $tree, $tree, $tree, $tree,
 	    $sheep, $sheep, $sheep, $sheep,$sheep, $sheep,
 	    $ore, $ore, $ore, $ore, $ore,
 	    $brick, $brick, $brick, $brick, $brick),
-my @numbersDeck4 = (2, 3, 3, 4, 4, 5, 5, 6, 6, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 7);
+my @numbersDeck4 = (2, 3, 3, 4, 4, 5, 5, 6, 6, 8, 8, 9, 9, 10, 10, 11, 11, 12, 7);
 my @numbersDeck6 = (2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 8, 8, 8, 9, 9, 9, 10, 10, 10, 11, 11, 11, 12, 12, 7, 7);
 
 #Start building the board image
 my $outImage = new GD::Image($bgW, $bgH);
 $outImage->alphaBlending(1);
 $outImage->saveAlpha(1);
-$outImage->copyResampled($bg, 0, 0, 0 ,0, $bgW, $bgH, $bgW, $bgH);
-
+if ( -f "/tmp/settlersboard.png" ) {
+    $outImage=GD::Image->newFromPng("/tmp/settlersboard.png");
+} else {
+    $outImage->copyResampled($bg, 0, 0, 0 ,0, $bgW, $bgH, $bgW, $bgH);
+}
 sub generate_board {
     my $numplayers = shift;
     my @deck = ();
@@ -110,7 +112,7 @@ sub generate_board {
     # Distribute numbers first until we find a valid config
     my $validboard = 0;
     while ($validboard == 0) {
-#	print("Reset\n");
+	#print("Reset\n");
 	if ($numplayers == 6 ) {
 	    @deck = @deck6;
 	    @numbersDeck = @numbersDeck6;
@@ -125,28 +127,28 @@ sub generate_board {
     for (my $col=1; $col<=7; $col++) {
 	for (my $row=1; $row<=6; $row++) {
 	    if ($numplayers == 6 ) {
-	    if ( ($col == 1 || $col == 7 ) && ($row >= 2 && $row <= 4))  {
-		$board[$col][$row] = pop(@numbersDeck);
-	    }
-	    if ( ($col == 2 || $col == 6 ) && ($row >= 2 && $row <= 5))  {
-		$board[$col][$row] = pop(@numbersDeck);
-	    }
-	    if ( ($col == 3 || $col == 5 ) && ($row >= 1 && $row <= 5))  {
-		$board[$col][$row] = pop(@numbersDeck);
-	    }
-	    if ( ($col == 4 || $col == 4 ) && ($row >= 1 && $row <= 6))  {
-		$board[$col][$row] = pop(@numbersDeck);
-	    }
+		if ( ($row == 1 || $row == 6 ) && ($col >= 2 && $col <= 5))  {
+		    $board[$col][$row] = pop(@numbersDeck);
+		}
+		if ( ($row == 2 ) && ($col >= 2 && $col <= 6))  {
+		    $board[$col][$row] = pop(@numbersDeck);
+		}
+		if ( ($row == 3 || $row == 4 ) && ($col >= 1 && $col <= 6))  {
+		    $board[$col][$row] = pop(@numbersDeck);
+		}
+		if ( ($row == 5 ) && ($col >= 1 && $col <= 5))  {
+		    $board[$col][$row] = pop(@numbersDeck);
+		}
 	    } else {
-	    if ( ($col == 2 || $col == 6 ) && ($row >= 2 && $row <= 4))  {
-		$board[$col][$row] = pop(@numbersDeck);
-	    }
-	    if ( ($col == 3 || $col == 5 ) && ($row >= 1 && $row <= 4))  {
-		$board[$col][$row] = pop(@numbersDeck);
-	    }
-	    if ( ($col == 4 || $col == 4 ) && ($row >= 1 && $row <= 5))  {
-		$board[$col][$row] = pop(@numbersDeck);
-	    }
+		if ( ($row == 2 || $row == 6 ) && ($col >= 2 && $col <= 4))  {
+		    $board[$col][$row] = pop(@numbersDeck);
+		}
+		if ( ($row == 3 || $row == 5 ) && ($col >= 1 && $col <= 4))  {
+		    $board[$col][$row] = pop(@numbersDeck);
+		}
+		if ( ($row == 4 || $row == 4 ) && ($col >= 1 && $col <= 5))  {
+		    $board[$col][$row] = pop(@numbersDeck);
+		}
 	    }
 	    # Check adjacency on 6's and 8's
 	    my $currentnum = $board[$col][$row];
@@ -157,11 +159,11 @@ sub generate_board {
 		push (@adjnums, $board[$col-1][$row] );#       printf("C%d,%d ",$col-1,$row);
 		push (@adjnums, $board[$col][$row-1] );#       printf("C%d,%d ",$col,$row-1);
 		push (@adjnums, $board[$col][$row+1]); #       printf("C%d,%d ",$col,$row+1);
-		if ($col % 2 == 0) { 
+		if ($row % 2 == 0) { 
 		    push (@adjnums, $board[$col-1][$row - 1]);#printf("C%d,%d ",$col-1,$row-1);
-		    push (@adjnums, $board[$col+1][$row - 1]);#printf("C%d,%d ",$col+1,$row-1);
+		    push (@adjnums, $board[$col-1][$row + 1]);#printf("C%d,%d ",$col+1,$row-1);
 		} else {
-		    push (@adjnums, $board[$col-1][$row + 1]);#printf("C%d,%d ",$col-1,$row+1);
+		    push (@adjnums, $board[$col+1][$row - 1]);#printf("C%d,%d ",$col-1,$row+1);
 		    push (@adjnums, $board[$col+1][$row + 1]);#printf("C%d,%d ",$col+1,$row+1);
 		}
 		foreach my $number (@adjnums) {
@@ -184,16 +186,18 @@ sub generate_board {
     my $portW = 0;
 
     if ($numplayers == 6) {
-	$xoff = int(($bgW - $hexwidth * 8) / 2) ;
+	$xoff = int(($bgW - $hexwidth * 7.5) / 2) ;
 	$outImage->copyResampled($bg, 0, 0, 0 ,0, $bgW, $bgH, $bgW, $bgH);
-#	$yoff = -1 * int($hexheight/2);
-	$yoff =  int(($bgH - $hexheight * 8.5)/2);
+	$yoff = int(.25 * $hexheight);
+	($portW, $portH) = $ports6->getBounds();
+	$outImage->copyResampled($ports6, -21, 0, 0, 0, $portW, $portH, $portW, $portH);
+#	$yoff =  int(($bgH - $hexheight * 8.5)/2);
     } else {
-	$xoff = int(($bgW - $hexwidth * 7) / 2) ;
-	$yoff =  int(($bgH - $hexheight * 7.5)/2) - 50;
+	$xoff = int(($bgW - $hexwidth * 7.5) / 2) ;
+	$yoff =  int(($bgH - $hexheight * 5.5)/2);
 	$outImage->copyResampled($bg, 0, 0, 0 ,0, $bgW, $bgH, $bgW, $bgH);
 	($portW, $portH) = $ports4->getBounds();
-	$outImage->copyResampled($ports4, ($bgW - $portW) /2, ($bgH - $portH) /2 - 50, 0, 0, $portW, $portH, $portW, $portH);
+	$outImage->copyResampled($ports4, ($bgW - $portW) /2 - $hexwidth*1.5, ($bgH - $portH) /2, 0, 0, $portW, $portH, $portW, $portH);
     }
 
 for (my $col=1; $col<=7; $col++) {
@@ -201,13 +205,14 @@ for (my $col=1; $col<=7; $col++) {
 	my $dstX = 0; my $dstY = 0;
 	my $imagenumber = $board[$col][$row];
 	if ($board[$col][$row] != 0 ) {
-	    if ($col % 2 == 0) {
-		$dstX = $xoff + ($hexside + $hexwidth ) * $col / 2;
-		$dstY = $yoff + $hexheight * $row;
+	    if ($row  % 2 == 0) {
+		$dstX = $xoff + $hexwidth * ($col - 1);
+		$dstY = $yoff + $hexside * 1.5 * ($row -1);
 	    } else {
-		$dstX = $xoff + $offset +  $hexside * ($col + 1 )/ 2 +  $hexwidth * ($col-1) / 2;
-		$dstY = $yoff + $hexheight * $row + $hexheight / 2;
+		$dstX = $xoff + $hexwidth / 2 + $hexwidth * ($col - 1);
+		$dstY = $yoff + $hexside * 1.5 * ($row -1);
 	    }
+	    
 	    my $tile = $desert;
 	    if ($board[$col][$row] != 7 ) { 
 		$tile = pop(@deck);
@@ -219,18 +224,20 @@ for (my $col=1; $col<=7; $col++) {
 	    }		
 	    #print "number $col,$row  $board[$col][$row]\n";
 	};
+
     }
 }
-#$outImage->copyResampled($hexgrid, $xoff, $yoff, 0, 0, 1163, $bgH, 1163, $bgH);
-#open OUTIMAGE, ">", "out1.png" or die "can't write $!";
-#binmode OUTIMAGE;
-#print OUTIMAGE $outImage->png;
-#close OUTIMAGE;
+
+#$outImage->copyResampled($hexgrid, $xoff, $yoff, 0, 0, $hexgrid->getBounds(), $hexgrid->getBounds());
+open OUTIMAGE, ">", "/tmp/settlersboard.png" or die "can't write $!";
+binmode OUTIMAGE;
+print OUTIMAGE $outImage->png;
+close OUTIMAGE;
 }
 
 # Setup the gui
 my $mw=tkinit;
-my $canvas = $mw->Scrolled('Canvas', -width => 1600, -height => 1000)->pack(-expand=>1, -fill=>'both');
+my $canvas = $mw->Scrolled('Canvas', -width => 1920, -height => 1080)->pack(-expand=>1, -fill=>'both');
 my $img = $mw->Photo( -data=>encode_base64($outImage->png), -format=>'png');
 $canvas->createImage(0,0,  
                   -image => $img, 
@@ -240,8 +247,11 @@ $canvas->createImage(0,0,
 
 my $but4 = $canvas -> Button(-text=>"4 Players", -command =>\&push_button4);
 my $but6 = $canvas -> Button(-text=>"6 Players", -command =>\&push_button6);
+my $quitbutton = $canvas -> Button(-text=>"Quit", -command => sub { exit });
+
 $canvas->createWindow(50, 20, -window=>$but4);
 $canvas->createWindow(150 ,20, -window=>$but6);
+$canvas->createWindow(250 ,20, -window=>$quitbutton);
 
 MainLoop;
 
