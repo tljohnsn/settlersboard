@@ -18,7 +18,7 @@ sub GD::Image::copyHex {
     my $dstX = shift;
     my $dstY = shift;
     my ($hexwidth,$hexheight) = $source->getBounds();
-    #copyResampled(destination, source, dstX, dstY, srcX, srcY, destW, destH, srcW, srcH)
+    # copyResampled(destination, source, dstX, dstY, srcX, srcY, destW, destH, srcW, srcH)
     # $self->copyResampled($source, $dstX, $dstY, 0, 0, $hexwidth, $hexheight, $hexwidth, $hexheight);
     my $angle = (int rand(6)) * 60;
    $self->copyRotated($source, $dstX + $hexwidth / 2, $dstY + $hexheight/2, 0, 0, $hexwidth, $hexheight, $angle);
@@ -74,10 +74,9 @@ my $ports6 = GD::Image->newFromPng("themes/$theme/ports6.png");
 # Calculate the display ofsets of the hexes loaded above
 my ($hexwidth,$hexheight) = $brick->getBounds();
 my $hexside = $hexheight  / 2;
-my $offset = int(sqrt(3)* $hexside / 4) + 8;
-print "$hexwidth,$hexheight,$hexside,$offset";
+print "width: $hexwidth height: $hexheight side:$hexside";
 
-# Tile and numbersets are constant
+# Build tile and number stacks
 my @deck4 = ($tree, $tree, $tree, $tree, 
 	     $wheat, $wheat, $wheat, $wheat, 
 	     $sheep, $sheep, $sheep, $sheep,
@@ -100,6 +99,7 @@ if ( -f "$ENV{HOME}/settlersboard.png" ) {
 } else {
     $outImage->copyResampled($bg, 0, 0, 0 ,0, $bgW, $bgH, $bgW, $bgH);
 }
+
 sub generate_board {
     my $numplayers = shift;
     my @deck = ();
@@ -115,7 +115,7 @@ sub generate_board {
     my $validboard = 0;
     while ($validboard == 0) {
 	#print("Reset\n");
-	if ($numplayers == 6 ) {
+	if ($numplayers >=5 ) {
 	    @deck = @deck6;
 	    @numbersDeck = @numbersDeck6;
 	} else {
@@ -128,7 +128,7 @@ sub generate_board {
     # Only fill the proper spaces in the hex grid with numbers
     for (my $col=1; $col<=7; $col++) {
 	for (my $row=1; $row<=6; $row++) {
-	    if ($numplayers == 6 ) {
+	    if ($numplayers >=5 ) {
 		if ( ($row == 1 || $row == 6 ) && ($col >= 2 && $col <= 5))  {
 		    $board[$col][$row] = pop(@numbersDeck);
 		}
@@ -186,20 +186,22 @@ sub generate_board {
     my $yoff = 0;
     my $portH = 0;
     my $portW = 0;
+    my $lrshift = 0;
 
-    if ($numplayers == 6) {
-	$xoff = int(($bgW - $hexwidth * 7.5) / 2) ;
+    if ($numplayers >=5) {
+	$xoff = int(($bgW - $hexwidth * 6.5) / 2) ;
+	$yoff = int(($bgH - $hexheight * 4.5) / 2);
+	if ($numplayers == 5) {  $xoff += $lrshift = $hexwidth * 2 };
 	$outImage->copyResampled($bg, 0, 0, 0 ,0, $bgW, $bgH, $bgW, $bgH);
-	$yoff = int(.25 * $hexheight);
 	($portW, $portH) = $ports6->getBounds();
-	$outImage->copyResampled($ports6, -21, 0, 0, 0, $portW, $portH, $portW, $portH);
-#	$yoff =  int(($bgH - $hexheight * 8.5)/2);
+	$outImage->copyResampled($ports6,  ($bgW - $portW) /2  - $hexwidth / 4 + $lrshift, ($bgH - $portH) /2 , 0, 0, $portW, $portH, $portW, $portH);
     } else {
 	$xoff = int(($bgW - $hexwidth * 7.5) / 2) ;
 	$yoff =  int(($bgH - $hexheight * 5.5)/2);
+	if ($numplayers == 3) {  $xoff += $lrshift = $hexwidth * 2 };
 	$outImage->copyResampled($bg, 0, 0, 0 ,0, $bgW, $bgH, $bgW, $bgH);
 	($portW, $portH) = $ports4->getBounds();
-	$outImage->copyResampled($ports4, ($bgW - $portW) /2 - $hexwidth*1.5, ($bgH - $portH) /2, 0, 0, $portW, $portH, $portW, $portH);
+	$outImage->copyResampled($ports4, ($bgW - $portW) /2 - $hexwidth*1.5 + $lrshift, ($bgH - $portH) /2, 0, 0, $portW, $portH, $portW, $portH);
     }
 
 for (my $col=1; $col<=7; $col++) {
@@ -229,7 +231,6 @@ for (my $col=1; $col<=7; $col++) {
 
     }
 }
-
 #$outImage->copyResampled($hexgrid, $xoff, $yoff, 0, 0, $hexgrid->getBounds(), $hexgrid->getBounds());
 }
 
@@ -244,42 +245,46 @@ sub save_board  {
 my $mw=tkinit;
 my $canvas = $mw->Scrolled('Canvas', -width => 1920, -height => 1080)->pack(-expand=>1, -fill=>'both');
 my $img = $mw->Photo( -data=>encode_base64($outImage->png), -format=>'png');
-$canvas->createImage(0,0,  
-                  -image => $img, 
-          -anchor => 'nw',
-          -tags => ['img'],
-    );
+$canvas->createImage(0,0, -image => $img, -anchor => 'nw', -tags => ['img'],);
 
+my $but3 = $canvas -> Button(-text=>"3 Players", -command =>\&push_button3);
 my $but4 = $canvas -> Button(-text=>"4 Players", -command =>\&push_button4);
+my $but5 = $canvas -> Button(-text=>"5 Players", -command =>\&push_button5);
 my $but6 = $canvas -> Button(-text=>"6 Players", -command =>\&push_button6);
 my $quitbutton = $canvas -> Button(-text=>"Quit", -command => sub { exit });
 
-$canvas->createWindow(50, 20, -window=>$but4);
-$canvas->createWindow(150 ,20, -window=>$but6);
-$canvas->createWindow(250 ,20, -window=>$quitbutton);
+$canvas->createWindow(50, 20, -window=>$but3);
+$canvas->createWindow(150, 20, -window=>$but4);
+$canvas->createWindow(250, 20, -window=>$but5);
+$canvas->createWindow(350 ,20, -window=>$but6);
+$canvas->createWindow(450 ,20, -window=>$quitbutton);
 
 MainLoop;
 
+sub push_button3 {
+    generate_board(3);
+    $img = $mw->Photo( -data=>encode_base64($outImage->png), -format=>'png');
+    $canvas->createImage(0,0, -image => $img, -anchor => 'nw', -tags => ['img'],);
+    save_board();
+}
+
 sub push_button4 {
-    #$ent -> insert(0,"Hello, ");
     generate_board(4);
     $img = $mw->Photo( -data=>encode_base64($outImage->png), -format=>'png');
-    $canvas->createImage(0,0,
-                  -image => $img,
-          -anchor => 'nw',
-          -tags => ['img'],
-	);
+    $canvas->createImage(0,0, -image => $img, -anchor => 'nw', -tags => ['img'],);
+    save_board();
+}
+
+sub push_button5 {
+    generate_board(5);
+    $img = $mw->Photo( -data=>encode_base64($outImage->png), -format=>'png');
+    $canvas->createImage(0,0, -image => $img, -anchor => 'nw', -tags => ['img'],);
     save_board();
 }
 
 sub push_button6 {
-    #$ent -> insert(0,"Hello, ");
     generate_board(6);
     $img = $mw->Photo( -data=>encode_base64($outImage->png), -format=>'png');
-    $canvas->createImage(0,0,
-                  -image => $img,
-          -anchor => 'nw',
-          -tags => ['img'],
-	);
+    $canvas->createImage(0,0, -image => $img, -anchor => 'nw', -tags => ['img'],);
     save_board();
 }
