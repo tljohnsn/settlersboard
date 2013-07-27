@@ -7,7 +7,7 @@ use Tk::PNG;
 use MIME::Base64 qw[ encode_base64 ];
 # sudo yum -y install perl-Tk perl-GD 
 # Grid generator: http://axiscity.hexamon.net/users/isomage/misc/svg-hex.cgi
-my $theme = "trent";
+my $theme = "dan";
 
 # New method so we don't have to keep using  srcY, destW, destH, srcW, srcH
 sub GD::Image::copyHex {
