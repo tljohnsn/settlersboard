@@ -243,7 +243,8 @@ sub save_board  {
     
 # Setup the gui
 my $mw=tkinit;
-my $canvas = $mw->Scrolled('Canvas', -width => 1920, -height => 1080)->pack(-expand=>1, -fill=>'both');
+my $canvas = $mw->Canvas(-width => 1920, -height => 1080);
+$canvas->pack(-expand => 1, -fill => 'both');
 my $img = $mw->Photo( -data=>encode_base64($outImage->png), -format=>'png');
 $canvas->createImage(0,0, -image => $img, -anchor => 'nw', -tags => ['img'],);
 
