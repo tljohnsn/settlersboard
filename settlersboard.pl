@@ -4,6 +4,8 @@ use warnings;
 use GD;
 use Tk;
 use Tk::PNG;
+use Env qw(HOME);
+
 use MIME::Base64 qw[ encode_base64 ];
 # sudo yum -y install perl-Tk perl-GD 
 # Grid generator: http://axiscity.hexamon.net/users/isomage/misc/svg-hex.cgi
@@ -93,8 +95,8 @@ my @numbersDeck6 = (2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 8, 8, 8, 9, 9, 9, 
 my $outImage = new GD::Image($bgW, $bgH);
 $outImage->alphaBlending(1);
 $outImage->saveAlpha(1);
-if ( -f "/tmp/settlersboard.png" ) {
-    $outImage=GD::Image->newFromPng("/tmp/settlersboard.png");
+if ( -f "$ENV{HOME}/settlersboard.png" ) {
+    $outImage=GD::Image->newFromPng("$ENV{HOME}/settlersboard.png");
 } else {
     $outImage->copyResampled($bg, 0, 0, 0 ,0, $bgW, $bgH, $bgW, $bgH);
 }
@@ -229,12 +231,15 @@ for (my $col=1; $col<=7; $col++) {
 }
 
 #$outImage->copyResampled($hexgrid, $xoff, $yoff, 0, 0, $hexgrid->getBounds(), $hexgrid->getBounds());
-open OUTIMAGE, ">", "/tmp/settlersboard.png" or die "can't write $!";
-binmode OUTIMAGE;
-print OUTIMAGE $outImage->png;
-close OUTIMAGE;
 }
 
+sub save_board  {
+    open OUTIMAGE, ">", "$ENV{HOME}/settlersboard.png" or die "can't write $!";
+    binmode OUTIMAGE;
+    print OUTIMAGE $outImage->png;
+    close OUTIMAGE;
+}
+    
 # Setup the gui
 my $mw=tkinit;
 my $canvas = $mw->Scrolled('Canvas', -width => 1920, -height => 1080)->pack(-expand=>1, -fill=>'both');
@@ -264,6 +269,7 @@ sub push_button4 {
           -anchor => 'nw',
           -tags => ['img'],
 	);
+    save_board();
 }
 
 sub push_button6 {
@@ -275,4 +281,5 @@ sub push_button6 {
           -anchor => 'nw',
           -tags => ['img'],
 	);
+    save_board();
 }
