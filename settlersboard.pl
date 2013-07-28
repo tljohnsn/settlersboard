@@ -207,7 +207,6 @@ sub generate_board {
 for (my $col=1; $col<=7; $col++) {
     for (my $row=1; $row<=6; $row++) {
 	my $dstX = 0; my $dstY = 0;
-	my $imagenumber = $board[$col][$row];
 	if ($board[$col][$row] != 0 ) {
 	    if ($row  % 2 == 0) {
 		$dstX = $xoff + $hexwidth * ($col - 1);
@@ -216,7 +215,6 @@ for (my $col=1; $col<=7; $col++) {
 		$dstX = $xoff + $hexwidth / 2 + $hexwidth * ($col - 1);
 		$dstY = $yoff + $hexside * 1.5 * ($row -1);
 	    }
-	    
 	    my $tile = $desert;
 	    if ($board[$col][$row] != 7 ) { 
 		$tile = pop(@deck);
@@ -235,10 +233,12 @@ for (my $col=1; $col<=7; $col++) {
 }
 
 sub save_board  {
+    #print "write\n";
     open OUTIMAGE, ">", "$ENV{HOME}/settlersboard.png" or die "can't write $!";
     binmode OUTIMAGE;
     print OUTIMAGE $outImage->png;
     close OUTIMAGE;
+    #print "finishwrite\n";
 }
     
 # Setup the gui
@@ -262,30 +262,36 @@ $canvas->createWindow(450 ,20, -window=>$quitbutton);
 
 MainLoop;
 
+sub display_board {
+    $mw->update();
+    #print "encode\n";
+    $img = $mw->Photo( -data=>$outImage->gif, -format=>'gif');
+    #print "display\n";
+    $canvas->createImage(0,0, -image => $img, -anchor => 'nw', -tags => ['img'],);
+    $mw->update();
+    #print "done\n";
+}
+
 sub push_button3 {
     generate_board(3);
-    $img = $mw->Photo( -data=>encode_base64($outImage->png), -format=>'png');
-    $canvas->createImage(0,0, -image => $img, -anchor => 'nw', -tags => ['img'],);
+    display_board();
     save_board();
 }
 
 sub push_button4 {
     generate_board(4);
-    $img = $mw->Photo( -data=>encode_base64($outImage->png), -format=>'png');
-    $canvas->createImage(0,0, -image => $img, -anchor => 'nw', -tags => ['img'],);
+    display_board();
     save_board();
 }
 
 sub push_button5 {
     generate_board(5);
-    $img = $mw->Photo( -data=>encode_base64($outImage->png), -format=>'png');
-    $canvas->createImage(0,0, -image => $img, -anchor => 'nw', -tags => ['img'],);
+    display_board();
     save_board();
 }
 
 sub push_button6 {
     generate_board(6);
-    $img = $mw->Photo( -data=>encode_base64($outImage->png), -format=>'png');
-    $canvas->createImage(0,0, -image => $img, -anchor => 'nw', -tags => ['img'],);
+    display_board();
     save_board();
 }
