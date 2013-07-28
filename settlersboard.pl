@@ -6,7 +6,6 @@ use Tk;
 use Tk::PNG;
 use Env qw(HOME);
 
-use MIME::Base64 qw[ encode_base64 ];
 # sudo yum -y install perl-Tk perl-GD 
 # Grid generator: http://axiscity.hexamon.net/users/isomage/misc/svg-hex.cgi
 my $theme = "dan";
@@ -245,7 +244,7 @@ sub save_board  {
 my $mw=tkinit;
 my $canvas = $mw->Canvas(-width => 1920, -height => 1080);
 $canvas->pack(-expand => 1, -fill => 'both');
-my $img = $mw->Photo( -data=>encode_base64($outImage->png), -format=>'png');
+my $img = $mw->Photo( -data=>$outImage->gif, -format=>'gif');
 $canvas->createImage(0,0, -image => $img, -anchor => 'nw', -tags => ['img'],);
 
 my $but3 = $canvas -> Button(-text=>"3 Players", -command =>\&push_button3);
